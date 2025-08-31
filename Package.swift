@@ -5,8 +5,13 @@ import PackageDescription
 
 let package = Package(
     name: "ToyBrowser",
+    platforms: [
+        .macOS(.v11)
+    ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
+        .package(url: "https://github.com/migueldeicaza/SkiaKit.git", branch: "main"),
+        .package(url: "https://github.com/ctreffs/SwiftSDL2.git", from: "1.4.1")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -15,6 +20,8 @@ let package = Package(
             name: "ToyBrowser",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "SkiaKit", package: "SkiaKit"),
+                .product(name: "SDL", package: "SwiftSDL2")
             ]
         ),
     ]

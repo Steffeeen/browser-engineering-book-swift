@@ -1,6 +1,15 @@
 {
-  "originHash" : "9d0eb43fb7a909ec4b8fd2528b4ac17544a2a3fbbdd89df262b53dfb88c6d3c6",
+  "originHash" : "206f5a3ad9a12edf85194ace8075ecaeaa0b4d3a1986ed749cba81cb2d03e28b",
   "pins" : [
+    {
+      "identity" : "skiakit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/migueldeicaza/SkiaKit.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "bad7d455aee89bc434b254aefd1518330662e23a"
+      }
+    },
     {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
@@ -8,6 +17,15 @@
       "state" : {
         "revision" : "309a47b2b1d9b5e991f36961c983ecec72275be3",
         "version" : "1.6.1"
+      }
+    },
+    {
+      "identity" : "swiftsdl2",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ctreffs/SwiftSDL2.git",
+      "state" : {
+        "revision" : "30a2886bd68e43fc19ba29b63ffe230ac0e4db7a",
+        "version" : "1.4.1"
       }
     }
   ],
