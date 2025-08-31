@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+
+# Xcode
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata
+*.xcodeproj/project.xcworkspace/xcuserdata
+*.xcodeproj/xcuserdata
+DerivedData/
+build/
+
+# SwiftPM
+.build/
+Packages/
+
+# Swift Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# User-specific files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.env
+
+# Logs
+*.log
+.DS_Store
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm/configuration/registries.json
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.netrc
