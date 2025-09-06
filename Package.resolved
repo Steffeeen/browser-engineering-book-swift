@@ -1,5 +1,5 @@
 {
-  "originHash" : "903f168f65556524af024040e0034c141d774f453462e524fe000cc3a3a4a202",
+  "originHash" : "cd94969744235c2c37236a3bba008a2ad170ed946bfd6dc4addf73913ebae389",
   "pins" : [
     {
       "identity" : "bluesocket",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "7b23a867008e0027bfd6f4d398d44720707bc8ca",
         "version" : "2.0.4"
+      }
+    },
+    {
+      "identity" : "bluesslservice",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Kitura/BlueSSLService.git",
+      "state" : {
+        "revision" : "b27a94d063962dfa1bba9f79814c4ef202cf33a4",
+        "version" : "2.0.2"
       }
     },
     {
