@@ -20,8 +20,10 @@ struct ToyBrowser: AsyncParsableCommand {
             return
         }
 
-        let response = try await url.request()
-        print("Got response: \(response.statusCode) \(response.statusMessage)")
+        let response = try await fetchUrl(url)
+        if case .http(_, let statusCode, let statusMessage, _, _) = response {
+            print("Got response: \(statusCode) \(statusMessage)")
+        }
         print(show(response.body))
 
         // Initialize SDL video systems
