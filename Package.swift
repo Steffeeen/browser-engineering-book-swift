@@ -28,5 +28,9 @@ let package = Package(
                 .product(name: "SSLService", package: "BlueSSLService"),
             ]
         ),
+        .testTarget(
+            name: "ToyBrowserTests",
+            dependencies: ["ToyBrowser"]
+        ),
     ]
 )
