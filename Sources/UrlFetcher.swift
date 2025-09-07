@@ -83,12 +83,12 @@ private func fetchHttpUrl(_ url: NetworkUrl) async throws -> Response {
     }
 
     let lines = response.components(separatedBy: "\r\n")
-    let statusLineParts = lines[0].components(separatedBy: " ")
+    let statusLineParts = lines[0].split(separator: " ", maxSplits: 2)
     if statusLineParts.count != 3 {
-        throw RequestError.invalidStatusLine(elements: statusLineParts)
+        throw RequestError.invalidStatusLine(elements: statusLineParts.map { String($0) })
     }
     let (version, statusCode, statusMessage) = (
-        statusLineParts[0], statusLineParts[1], statusLineParts[2]
+        String(statusLineParts[0]), Int(statusLineParts[1]) ?? -1, String(statusLineParts[2])
     )
     let headers = {
         let headerLines = lines.dropFirst().prefix { !$0.isEmpty }
@@ -108,7 +108,7 @@ private func fetchHttpUrl(_ url: NetworkUrl) async throws -> Response {
 
     return Response.http(
         version: version,
-        statusCode: Int(statusCode) ?? -1,
+        statusCode: statusCode,
         statusMessage: statusMessage,
         headers: headers,
         body: body

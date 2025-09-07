@@ -37,6 +37,13 @@ enum NetworkUrl: PathUrl {
         case .https(_, let port, _): return port
         }
     }
+
+    var scheme : String {
+        switch self {
+        case .http: return "http"
+        case .https: return "https"
+        }
+    }
 }
 
 struct FileUrl: PathUrl {
@@ -71,7 +78,7 @@ func parseUrl(_ url: String) -> Url? {
         let regex = /^view-source:(.*)$/
 
         guard let match = try? regex.wholeMatch(in: url) else { return nil }
-        
+
         let innerUrlString = String(match.1)
         if let innerUrl = parseUrl(innerUrlString) {
             return ViewSourceUrl(url: innerUrl)

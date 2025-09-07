@@ -20,7 +20,29 @@ struct ToyBrowser: AsyncParsableCommand {
             return
         }
 
-        let response = try await fetchUrl(url)
+        var response = try await fetchUrl(url)
+        var currentUrl = url
+
+        while case .http(_, let statusCode, _, let headers, _) = response,
+            (300...399).contains(statusCode),
+            let location = headers["location"]
+        {
+            print("Redirecting to \(location)")
+            let newUrl = if location.starts(with: "/"), let networkUrl = currentUrl as? NetworkUrl {
+                parseUrl("\(networkUrl.scheme)://\(networkUrl.host)\(location)")
+            } else {
+                parseUrl(location)
+            }
+
+            guard let newUrl else {
+                print("Invalid redirect URL: \(location)")
+                return
+            }
+
+            response = try await fetchUrl(newUrl)
+            currentUrl = newUrl
+        }
+
         if case .http(_, let statusCode, let statusMessage, _, _) = response {
             print("Got response: \(statusCode) \(statusMessage)")
         }
