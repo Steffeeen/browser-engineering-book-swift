@@ -8,6 +8,7 @@ enum Response {
         body: String)
     case file(contents: String)
     case data(contents: String)
+    case viewSource(source: String)
     
     var body: String {
         switch self {
@@ -17,6 +18,8 @@ enum Response {
             return contents
         case .data(let contents):
             return contents
+        case .viewSource(let source):
+            return source
         }
     }
 }
@@ -37,6 +40,13 @@ func fetchUrl(_ url: Url) async throws -> Response {
         return Response.file(contents: contents)
     case let dataUrl as DataUrl:
         return Response.data(contents: dataUrl.data)
+    case let viewSourceUrl as ViewSourceUrl:
+        let response = try await fetchUrl(viewSourceUrl.url)
+        let replacedBody = response.body
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+        return Response.viewSource(source: replacedBody)
 
     default:
         throw RequestError.noResponse

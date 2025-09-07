@@ -47,6 +47,10 @@ struct DataUrl: Url {
     let data: String
 }
 
+struct ViewSourceUrl: Url {
+    let url: Url
+}
+
 func parseUrl(_ url: String) -> Url? {
     let scheme = url.components(separatedBy: ":").first
 
@@ -59,6 +63,18 @@ func parseUrl(_ url: String) -> Url? {
         let regex = /^data:(.*),(.*)$/
         if let match = try? regex.wholeMatch(in: url), match.1 == "text/html" {
             return DataUrl(data: String(match.2))
+        }
+        return nil
+    }
+
+    if scheme == "view-source" {
+        let regex = /^view-source:(.*)$/
+
+        guard let match = try? regex.wholeMatch(in: url) else { return nil }
+        
+        let innerUrlString = String(match.1)
+        if let innerUrl = parseUrl(innerUrlString) {
+            return ViewSourceUrl(url: innerUrl)
         }
         return nil
     }
