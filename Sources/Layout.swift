@@ -9,11 +9,25 @@ func layoutText(_ text: String, maxWidth: Int) -> [CharLayoutData] {
     let spaceWidth: Int = 8 // Approximate width of a space character
     let lineHeight: Int = 18 // Approximate height of a line
 
-    for (i, char) in text.enumerated() {
-        let x = i * spaceWidth % maxWidth
-        let y = (i * spaceWidth / maxWidth) * lineHeight
+    var currentX = 0
+    var currentY = 0
+    for char in text {
+        if char == "\n" {
+            currentX = 0
+            currentY += lineHeight
+            print("Laying out newline at (\(currentX), \(currentY))")
+            continue
+        }
 
-        layoutData.append(CharLayoutData(char: char, x: Float(x), y: Float(y)))
+        print("Laying out char '\(char)' at (\(currentX), \(currentY))")
+        layoutData.append(CharLayoutData(char: char, x: Float(currentX), y: Float(currentY)))
+
+        currentX += spaceWidth
+        if currentX > maxWidth {
+            print("Wrapping line at char '\(char)' because currentX \(currentX) > maxWidth \(maxWidth)")
+            currentX = 0
+            currentY += lineHeight
+        }
     }
 
     return layoutData
