@@ -9,51 +9,59 @@ struct ToyBrowser: AsyncParsableCommand {
     var urlString: String
 
     mutating func run() async throws {
-        let html = try await load(urlString)
+        let text = try await load(urlString) ?? ""
+
+        let windowWidth: Int32 = 800
+        let windowHeight: Int32 = 600
 
         Task { @MainActor in
 
-            let window = Window() ?? { fatalError("Could not create window") }()
+            let window =
+                Window(width: windowWidth, height: windowHeight)
+                ?? { fatalError("Could not create window") }()
 
-            var circleX: Float = 400
-            var direction: Float = 10
+            var scroll = 0
+
+            let scrollSpeed = 30
+            window.registerKeyListener(forKey: SDLK_DOWN.rawValue) { scroll += scrollSpeed }
+            window.registerKeyListener(forKey: SDLK_UP.rawValue) {
+                scroll = max(0, scroll - scrollSpeed)
+            }
+
+            let paint = Paint()
+            paint.color = Color(r: 0, g: 0, b: 0)
+            paint.isAntialias = true
+            paint.style = .fill
+
+            let fontStyle = FontStyle(weight: .normal, width: .normal, slant: .upright)
+            guard let typeface = Typeface(familyName: "Arial", style: fontStyle) else {
+                fatalError("Could not create typeface")
+            }
+
+            let font = Font(typeface: typeface, size: 16, scaleX: 1.0, skewX: 0.0)
+            let margin = 20
+
+            let layoutData = layoutText(text, maxWidth: Int(windowWidth) - 2 * margin)
 
             var quit = false
             while !quit {
                 quit = window.eventLoop { canvas in
 
-                    if circleX > 600 {
-                        direction = -10
-                    } else if circleX < 200 {
-                        direction = 10
+                    for charData in layoutData {
+                        let x = charData.x + Float(margin)
+                        let y = charData.y + Float(margin) - Float(scroll)
+
+                        guard y >= Float(margin) && y <= Float(Int(windowHeight) - margin) else {
+                            continue
+                        }
+
+                        let text = String(charData.char)
+                        canvas.draw(text: text, x: x, y: y, font: font, paint: paint)
                     }
-
-                    circleX += direction
-
-                    let paint = Paint()
-                    paint.color = Color(r: 0, g: 0, b: 0)
-                    paint.isAntialias = true
-                    paint.style = .fill
-
-                    guard
-                        let typeface = Typeface(
-                            familyName: "Arial",
-                            style: FontStyle(weight: .normal, width: .normal, slant: .upright))
-                    else {
-                        fatalError("Could not create typeface")
-                    }
-
-                    canvas.draw(
-                        text: "Hello from Skia (CPU)!", x: 50, y: 100,
-                        font: Font(typeface: typeface, size: 16, scaleX: 1.0, skewX: 0.0),
-                        paint: paint)
-
-                    paint.color = Color(r: 255, g: 0, b: 0)
-                    canvas.drawCircle(circleX, 300, 100, paint)
                 }
 
-                // wait 33 ms (30 FPS)
-                SDL_Delay(33)
+                // wait ~16ms (60fps)
+                SDL_Delay(16)
             }
         }
     }
@@ -94,11 +102,11 @@ func load(_ urlString: String) async throws -> String? {
     }
 
     let toShow = response.body
-    print(show(toShow))
-    return show(toShow)
+    print(lex(toShow))
+    return lex(toShow)
 }
 
-func show(_ html: String) -> String {
+func lex(_ html: String) -> String {
     var inTag = false
     var text = ""
     for char in html {
