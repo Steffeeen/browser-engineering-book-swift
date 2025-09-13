@@ -4,8 +4,8 @@ import SkiaKit
 
 class Window {
     private let window: OpaquePointer
-    // Listener: (key: Int32, eventType: UInt32, handler: (SDL_Keysym, UInt32) -> Void)
     private var keyListeners: [(key: UInt32, handler: () -> Void)] = []
+    private var scrollListeners: [(_ x: Int32, _ y: Int32) -> Void] = []
 
     init?(width: Int32, height: Int32) {
         guard SDL_Init(SDL_INIT_VIDEO) == 0 else {
@@ -36,6 +36,11 @@ class Window {
         keyListeners.append((key: key, handler: handler))
     }
 
+    /// Register a scroll event handler. The handler receives the x and y scroll deltas.
+    func registerScrollListener(_ handler: @escaping (_ x: Int32, _ y: Int32) -> Void) {
+        scrollListeners.append(handler)
+    }
+
     func eventLoop(canvasDrawingFunction: (Canvas) -> Void) -> Bool {
         var event = SDL_Event()
 
@@ -48,6 +53,12 @@ class Window {
                     if event.key.keysym.sym == listener.key {
                         listener.handler()
                     }
+                }
+            case SDL_MOUSEWHEEL.rawValue:
+                let x = event.wheel.x
+                let y = event.wheel.y
+                for handler in scrollListeners {
+                    handler(x, y)
                 }
             default:
                 break

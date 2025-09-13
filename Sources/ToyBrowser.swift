@@ -28,6 +28,11 @@ struct ToyBrowser: AsyncParsableCommand {
                 scroll = max(0, scroll - scrollSpeed)
             }
 
+            window.registerScrollListener { x, y in
+                // Invert y to match "normal" scrolling direction on macOS, this inverts the scroll direction on all other platforms
+                scroll = max(0, Int(-y) * 3 + scroll)
+            }
+
             let paint = Paint()
             paint.color = Color(r: 0, g: 0, b: 0)
             paint.isAntialias = true
