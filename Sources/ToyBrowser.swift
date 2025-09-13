@@ -11,13 +11,10 @@ struct ToyBrowser: AsyncParsableCommand {
     mutating func run() async throws {
         let text = try await load(urlString) ?? ""
 
-        let windowWidth: Int32 = 800
-        let windowHeight: Int32 = 600
-
         Task { @MainActor in
 
             let window =
-                Window(width: windowWidth, height: windowHeight)
+                Window(width: 800, height: 600)
                 ?? { fatalError("Could not create window") }()
 
             var scroll = 0
@@ -44,9 +41,13 @@ struct ToyBrowser: AsyncParsableCommand {
             }
 
             let font = Font(typeface: typeface, size: 16, scaleX: 1.0, skewX: 0.0)
-            let margin = 20
+            let margin: Int32 = 20
 
-            let layoutData = layoutText(text, maxWidth: Int(windowWidth) - 2 * margin)
+            var layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
+
+            window.registerResizeListener {
+                layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
+            }
 
             var quit = false
             while !quit {
@@ -56,7 +57,7 @@ struct ToyBrowser: AsyncParsableCommand {
                         let x = charData.x + Float(margin)
                         let y = charData.y + Float(margin) - Float(scroll)
 
-                        guard y >= Float(margin) && y <= Float(Int(windowHeight) - margin) else {
+                        guard y >= Float(margin) && y <= Float(window.height - margin) else {
                             continue
                         }
 

@@ -7,29 +7,46 @@ class Window {
     private var keyListeners: [(key: UInt32, handler: () -> Void)] = []
     private var scrollListeners: [(_ x: Int32, _ y: Int32) -> Void] = []
 
+    private var resizeListeners: [() -> Void] = []
+
+    private var _width: Int32
+    private var _height: Int32
+
     init?(width: Int32, height: Int32) {
         guard SDL_Init(SDL_INIT_VIDEO) == 0 else {
             fatalError("SDL could not initialize! SDL_Error: \(String(cString: SDL_GetError()))")
         }
 
+        let windowFlags = SDL_WINDOW_SHOWN.rawValue | SDL_WINDOW_RESIZABLE.rawValue
         let maybeWindow = SDL_CreateWindow(
             "Toy Browser",
             Int32(SDL_WINDOWPOS_CENTERED_MASK), Int32(SDL_WINDOWPOS_CENTERED_MASK),
             Int32(width), Int32(height),
-            SDL_WINDOW_SHOWN.rawValue)
+            windowFlags)
 
         guard let window = maybeWindow else {
             fatalError("Window could not be created! SDL_Error: \(String(cString: SDL_GetError()))")
         }
 
         self.window = window
+        self._width = width
+        self._height = height
     }
+    /// Register a resize event handler. The handler receives the new width and height.
+    func registerResizeListener(_ handler: @escaping () -> Void) {
+        resizeListeners.append(handler)
+    }
+
+    /// Current window width
+    var width: Int32 { _width }
+
+    /// Current window height
+    var height: Int32 { _height }
 
     deinit {
         SDL_DestroyWindow(window)
         SDL_Quit()
     }
-
 
     /// Register a key listener for a specific key and event type (e.g. SDL_KEYDOWN/SDL_KEYUP)
     func registerKeyListener(forKey key: UInt32, handler: @escaping () -> Void) {
@@ -59,6 +76,16 @@ class Window {
                 let y = event.wheel.y
                 for handler in scrollListeners {
                     handler(x, y)
+                }
+            case SDL_WINDOWEVENT.rawValue:
+                if event.window.event == SDL_WINDOWEVENT_RESIZED.rawValue {
+                    let newWidth = event.window.data1
+                    let newHeight = event.window.data2
+                    self._width = newWidth
+                    self._height = newHeight
+                    for handler in resizeListeners {
+                        handler()
+                    }
                 }
             default:
                 break

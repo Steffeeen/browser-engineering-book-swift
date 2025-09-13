@@ -4,7 +4,7 @@ struct CharLayoutData {
     let y: Float
 }
 
-func layoutText(_ text: String, maxWidth: Int) -> [CharLayoutData] {
+func layoutText(_ text: String, maxWidth: Int32) -> [CharLayoutData] {
     var layoutData: [CharLayoutData] = []
     let spaceWidth: Int = 8 // Approximate width of a space character
     let lineHeight: Int = 18 // Approximate height of a line
