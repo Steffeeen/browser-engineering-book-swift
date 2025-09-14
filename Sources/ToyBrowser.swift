@@ -18,16 +18,20 @@ struct ToyBrowser: AsyncParsableCommand {
                 ?? { fatalError("Could not create window") }()
 
             var scroll = 0
+            var maxScroll = 0
 
             let scrollSpeed = 30
-            window.registerKeyListener(forKey: SDLK_DOWN.rawValue) { scroll += scrollSpeed }
+            window.registerKeyListener(forKey: SDLK_DOWN.rawValue) { 
+                scroll = min(max(0, scroll + scrollSpeed), maxScroll)
+            }
             window.registerKeyListener(forKey: SDLK_UP.rawValue) {
-                scroll = max(0, scroll - scrollSpeed)
+                scroll = min(max(0, scroll - scrollSpeed), maxScroll)
             }
 
             window.registerScrollListener { x, y in
                 // Invert y to match "normal" scrolling direction on macOS, this inverts the scroll direction on all other platforms
-                scroll = max(0, Int(-y) * 3 + scroll)
+                let newScrollValue = Int(-y) * 3 + scroll
+                scroll = min(max(0, newScrollValue), maxScroll)
             }
 
             let paint = Paint()
@@ -44,9 +48,11 @@ struct ToyBrowser: AsyncParsableCommand {
             let margin: Int32 = 20
 
             var layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
+            maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
 
             window.registerResizeListener {
                 layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
+                maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
             }
 
             var quit = false
