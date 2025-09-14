@@ -9,16 +9,21 @@ struct ToyBrowser: AsyncParsableCommand {
     var urlString: String
 
     mutating func run() async throws {
-        let text = try await load(urlString) ?? ""
+        let tokens = try await load(urlString)
+
+        guard let tokens else {
+            print("Lexing failed, URL: \(urlString)")
+            return
+        }
 
         Task { @MainActor in
-            displayBrowser(text: text)
+            displayBrowser(tokens: tokens)
         }
     }
 
 }
 
-func displayBrowser(text: String) {
+func displayBrowser(tokens: [Token]) {
     let window =
         Window(width: 800, height: 600)
         ?? { fatalError("Could not create window") }()
@@ -45,19 +50,13 @@ func displayBrowser(text: String) {
     paint.isAntialias = true
     paint.style = .fill
 
-    let fontStyle = FontStyle(weight: .normal, width: .normal, slant: .upright)
-    guard let typeface = Typeface(familyName: "Arial", style: fontStyle) else {
-        fatalError("Could not create typeface")
-    }
-
-    let font = Font(typeface: typeface, size: 16, scaleX: 1.0, skewX: 0.0)
     let margin: Int32 = 20
 
-    var layoutData = layoutText(text, maxWidth: window.width - 2 * margin, font: font)
+    var layoutData = layoutText(tokens, maxWidth: window.width - 2 * margin)
     maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
 
     window.registerResizeListener {
-        layoutData = layoutText(text, maxWidth: window.width - 2 * margin, font: font)
+        layoutData = layoutText(tokens, maxWidth: window.width - 2 * margin)
         maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
     }
 
@@ -74,7 +73,7 @@ func displayBrowser(text: String) {
                 }
 
                 let text = String(wordData.word)
-                canvas.draw(text: text, x: x, y: y, font: font, paint: paint)
+                canvas.draw(text: text, x: x, y: y, font: wordData.font, paint: paint)
 
                 if maxScroll > window.height {
                     drawScrollbar(
@@ -115,7 +114,7 @@ func drawScrollbar(canvas: Canvas, window: Window, scroll: Int, maxScroll: Int, 
     canvas.drawRect(scrollbarRect, scrollbarPaint)
 }
 
-func load(_ urlString: String) async throws -> String? {
+func load(_ urlString: String) async throws -> [Token]? {
     guard let url = parseUrl(urlString) else {
         print("Invalid URL: \(urlString)")
         return nil
@@ -150,24 +149,6 @@ func load(_ urlString: String) async throws -> String? {
     }
 
     let toShow = response.body
-    print(lex(toShow))
     return lex(toShow)
 }
 
-func lex(_ html: String) -> String {
-    var inTag = false
-    var text = ""
-    for char in html {
-        if char == "<" {
-            inTag = true
-        } else if char == ">" {
-            inTag = false
-        } else if !inTag {
-            text.append(char)
-        }
-    }
-    return
-        text
-        .replacingOccurrences(of: "&lt;", with: "<")
-        .replacingOccurrences(of: "&gt;", with: ">")
-}
