@@ -12,70 +12,74 @@ struct ToyBrowser: AsyncParsableCommand {
         let text = try await load(urlString) ?? ""
 
         Task { @MainActor in
+            displayBrowser(text: text)
+        }
+    }
 
-            let window =
-                Window(width: 800, height: 600)
-                ?? { fatalError("Could not create window") }()
+}
 
-            var scroll = 0
-            var maxScroll = 0
+func displayBrowser(text: String) {
+    let window =
+        Window(width: 800, height: 600)
+        ?? { fatalError("Could not create window") }()
 
-            let scrollSpeed = 30
-            window.registerKeyListener(forKey: SDLK_DOWN.rawValue) { 
-                scroll = min(max(0, scroll + scrollSpeed), maxScroll)
-            }
-            window.registerKeyListener(forKey: SDLK_UP.rawValue) {
-                scroll = min(max(0, scroll - scrollSpeed), maxScroll)
-            }
+    var scroll = 0
+    var maxScroll = 0
 
-            window.registerScrollListener { x, y in
-                // Invert y to match "normal" scrolling direction on macOS, this inverts the scroll direction on all other platforms
-                let newScrollValue = Int(-y) * 3 + scroll
-                scroll = min(max(0, newScrollValue), maxScroll)
-            }
+    let scrollSpeed = 30
+    window.registerKeyListener(forKey: SDLK_DOWN.rawValue) {
+        scroll = min(max(0, scroll + scrollSpeed), maxScroll)
+    }
+    window.registerKeyListener(forKey: SDLK_UP.rawValue) {
+        scroll = min(max(0, scroll - scrollSpeed), maxScroll)
+    }
 
-            let paint = Paint()
-            paint.color = Color(r: 0, g: 0, b: 0)
-            paint.isAntialias = true
-            paint.style = .fill
+    window.registerScrollListener { x, y in
+        // Invert y to match "normal" scrolling direction on macOS, this inverts the scroll direction on all other platforms
+        let newScrollValue = Int(-y) * 3 + scroll
+        scroll = min(max(0, newScrollValue), maxScroll)
+    }
 
-            let fontStyle = FontStyle(weight: .normal, width: .normal, slant: .upright)
-            guard let typeface = Typeface(familyName: "Arial", style: fontStyle) else {
-                fatalError("Could not create typeface")
-            }
+    let paint = Paint()
+    paint.color = Color(r: 0, g: 0, b: 0)
+    paint.isAntialias = true
+    paint.style = .fill
 
-            let font = Font(typeface: typeface, size: 16, scaleX: 1.0, skewX: 0.0)
-            let margin: Int32 = 20
+    let fontStyle = FontStyle(weight: .normal, width: .normal, slant: .upright)
+    guard let typeface = Typeface(familyName: "Arial", style: fontStyle) else {
+        fatalError("Could not create typeface")
+    }
 
-            var layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
-            maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
+    let font = Font(typeface: typeface, size: 16, scaleX: 1.0, skewX: 0.0)
+    let margin: Int32 = 20
 
-            window.registerResizeListener {
-                layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
-                maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
-            }
+    var layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
+    maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
 
-            var quit = false
-            while !quit {
-                quit = window.eventLoop { canvas in
+    window.registerResizeListener {
+        layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
+        maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
+    }
 
-                    for charData in layoutData {
-                        let x = charData.x + Float(margin)
-                        let y = charData.y + Float(margin) - Float(scroll)
+    var quit = false
+    while !quit {
+        quit = window.eventLoop { canvas in
 
-                        guard y >= Float(margin) && y <= Float(window.height - margin) else {
-                            continue
-                        }
+            for charData in layoutData {
+                let x = charData.x + Float(margin)
+                let y = charData.y + Float(margin) - Float(scroll)
 
-                        let text = String(charData.char)
-                        canvas.draw(text: text, x: x, y: y, font: font, paint: paint)
-                    }
+                guard y >= Float(margin) && y <= Float(window.height - margin) else {
+                    continue
                 }
 
-                // wait ~16ms (60fps)
-                SDL_Delay(16)
+                let text = String(charData.char)
+                canvas.draw(text: text, x: x, y: y, font: font, paint: paint)
             }
         }
+
+        // wait ~16ms (60fps)
+        SDL_Delay(16)
     }
 }
 
