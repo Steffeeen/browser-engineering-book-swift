@@ -75,12 +75,44 @@ func displayBrowser(text: String) {
 
                 let text = String(charData.char)
                 canvas.draw(text: text, x: x, y: y, font: font, paint: paint)
+
+                if maxScroll > window.height {
+                    drawScrollbar(
+                        canvas: canvas,
+                        window: window,
+                        scroll: scroll,
+                        maxScroll: maxScroll,
+                        margin: margin)
+                }
             }
         }
 
         // wait ~16ms (60fps)
         SDL_Delay(16)
     }
+}
+
+func drawScrollbar(canvas: Canvas, window: Window, scroll: Int, maxScroll: Int, margin: Int32) {
+    let scrollbarWidth: Float = 6
+    let scrollbarX = Float(window.width) - scrollbarWidth
+    let scrollbarHeight =
+        (Float(window.height) / (Float(maxScroll) + Float(window.height)))
+        * Float(window.height - 2 * margin)
+    let scrollbarY =
+        (Float(scroll) / (Float(maxScroll) + Float(window.height)))
+        * Float(window.height - 2 * margin)
+        + Float(margin)
+
+    let scrollbarRect = Rect(
+        left: scrollbarX,
+        top: scrollbarY,
+        right: scrollbarX + scrollbarWidth,
+        bottom: scrollbarY + scrollbarHeight)
+
+    let scrollbarPaint = Paint()
+    scrollbarPaint.color = Color(r: 200, g: 200, b: 200)
+    scrollbarPaint.style = .fill
+    canvas.drawRect(scrollbarRect, scrollbarPaint)
 }
 
 func load(_ urlString: String) async throws -> String? {
