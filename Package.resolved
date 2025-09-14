@@ -1,5 +1,5 @@
 {
-  "originHash" : "cd94969744235c2c37236a3bba008a2ad170ed946bfd6dc4addf73913ebae389",
+  "originHash" : "4f43cc812be8ca5f6bacf1dea9de95f7d7c1c3f99a1128c10e45fd2ba2254ec5",
   "pins" : [
     {
       "identity" : "bluesocket",
@@ -17,15 +17,6 @@
       "state" : {
         "revision" : "b27a94d063962dfa1bba9f79814c4ef202cf33a4",
         "version" : "2.0.2"
-      }
-    },
-    {
-      "identity" : "skiakit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/migueldeicaza/SkiaKit.git",
-      "state" : {
-        "branch" : "main",
-        "revision" : "bad7d455aee89bc434b254aefd1518330662e23a"
       }
     },
     {

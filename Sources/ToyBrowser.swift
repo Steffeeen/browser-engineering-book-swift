@@ -53,11 +53,11 @@ func displayBrowser(text: String) {
     let font = Font(typeface: typeface, size: 16, scaleX: 1.0, skewX: 0.0)
     let margin: Int32 = 20
 
-    var layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
+    var layoutData = layoutText(text, maxWidth: window.width - 2 * margin, font: font)
     maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
 
     window.registerResizeListener {
-        layoutData = layoutText(text, maxWidth: window.width - 2 * margin)
+        layoutData = layoutText(text, maxWidth: window.width - 2 * margin, font: font)
         maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
     }
 
@@ -65,15 +65,15 @@ func displayBrowser(text: String) {
     while !quit {
         quit = window.eventLoop { canvas in
 
-            for charData in layoutData {
-                let x = charData.x + Float(margin)
-                let y = charData.y + Float(margin) - Float(scroll)
+            for wordData in layoutData {
+                let x = wordData.x + Float(margin)
+                let y = wordData.y + Float(margin) - Float(scroll)
 
                 guard y >= Float(margin) && y <= Float(window.height - margin) else {
                     continue
                 }
 
-                let text = String(charData.char)
+                let text = String(wordData.word)
                 canvas.draw(text: text, x: x, y: y, font: font, paint: paint)
 
                 if maxScroll > window.height {
