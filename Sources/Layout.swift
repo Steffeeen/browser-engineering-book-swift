@@ -1,4 +1,5 @@
 import SkiaKit
+import Foundation
 
 struct WordLayoutData {
     let word: String
@@ -7,6 +8,7 @@ struct WordLayoutData {
     let font: Font
 }
 
+@MainActor
 func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
     var layoutData: [WordLayoutData] = []
 
@@ -57,8 +59,7 @@ func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
             case "b":
                 currentFont = createFont(weight: .bold, slant: currentSlant, size: currentSize)
             case "/b":
-                currentFont = createFont(
-                    weight: .normal, slant: currentSlant, size: currentSize)
+                currentFont = createFont(weight: .normal, slant: currentSlant, size: currentSize)
             case "i":
                 currentFont = createFont(weight: currentWeight, slant: .italic, size: currentSize)
             case "/i":
@@ -81,13 +82,31 @@ func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
     return layoutData
 }
 
-private func createFont(weight: FontStyleWeight, slant: FontStyleSlant, size: Float) -> Font {
-    let fontStyle = FontStyle(weight: weight, width: .normal, slant: slant)
-    guard let typeface = Typeface(familyName: "Arial", style: fontStyle) else {
-        fatalError("Could not create typeface")
-    }
 
-    return Font(typeface: typeface, size: size, scaleX: 1.0, skewX: 0.0)
+// Font cache to avoid recreating Font objects with the same parameters
+@MainActor
+fileprivate class FontCache {
+    static let shared = FontCache()
+    private var cache: [String: Font] = [:]
+
+    func font(weight: FontStyleWeight, slant: FontStyleSlant, size: Float) -> Font {
+        let key = "\(weight.rawValue)-\(slant.rawValue)-\(size)"
+        if let cached = cache[key] {
+            return cached
+        }
+        let fontStyle = FontStyle(weight: weight, width: .normal, slant: slant)
+        guard let typeface = Typeface(familyName: "Arial", style: fontStyle) else {
+            fatalError("Could not create typeface")
+        }
+        let font = Font(typeface: typeface, size: size, scaleX: 1.0, skewX: 0.0)
+        cache[key] = font
+        return font
+    }
+}
+
+@MainActor
+private func createFont(weight: FontStyleWeight, slant: FontStyleSlant, size: Float) -> Font {
+    return FontCache.shared.font(weight: weight, slant: slant, size: size)
 }
 
 private func weightToEnumHelper(_ weight: Int32) -> FontStyleWeight {

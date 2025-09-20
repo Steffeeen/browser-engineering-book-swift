@@ -23,6 +23,7 @@ struct ToyBrowser: AsyncParsableCommand {
 
 }
 
+@MainActor
 func displayBrowser(tokens: [Token]) {
     let window =
         Window(width: 800, height: 600)
