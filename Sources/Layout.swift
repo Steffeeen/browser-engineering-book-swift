@@ -22,7 +22,8 @@ func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
     }
 
     func layoutText(_ text: String) {
-        for line in text.split(separator: "\n") {
+        let lines = text.split(separator: "\n")
+        for (index, line) in lines.enumerated() {
             for word in line.split(separator: " ") {
                 let wordWidth = currentFont.measureText(string: String(word))
                 if currentX + wordWidth > Float(maxWidth) {
@@ -34,7 +35,9 @@ func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
                 currentX += wordWidth + currentFont.measureText(string: " ")
             }
 
-            newLine()
+            if index < lines.count - 1 {
+                newLine()
+            }
         }
     }
 
