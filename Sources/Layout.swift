@@ -41,6 +41,8 @@ func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
         }
     }
 
+    let fontSizeModifier: Float = 4.0
+
     for token in tokens {
         switch token {
         case .text(let text):
@@ -62,13 +64,13 @@ func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
             case "/i":
                 currentFont = createFont(weight: currentWeight, slant: .upright, size: currentSize)
             case "small":
-                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize - 2.0)
+                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize - fontSizeModifier)
             case "/small":
-                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize + 2.0)
+                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize + fontSizeModifier)
             case "big":
-                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize + 4.0)
+                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize + fontSizeModifier)
             case "/big":
-                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize - 4.0)
+                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize - fontSizeModifier)
             default:
                 continue
 
