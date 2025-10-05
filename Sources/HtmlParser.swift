@@ -1,3 +1,8 @@
+private let voidElementNames: Set<String> = [
+    "area", "base", "br", "col", "embed", "hr", "img", "input",
+    "link", "meta", "source", "track", "wbr"
+]
+
 class HtmlParser {
     private var unfinishedNodes = [HtmlNode]()
     private let html: String
@@ -48,10 +53,37 @@ class HtmlParser {
             var parent = unfinishedNodes.last
             parent?.children.append(node!)
         } else {
-            let parent = unfinishedNodes.last
-            let node = ElementNode(name: tagName, parent: parent)
-            unfinishedNodes.append(node)
+            var parent = unfinishedNodes.last
+            let (tagName, attributes) = getAttributes(from: tagName)
+            let node = ElementNode(name: tagName, attributes: attributes, parent: parent)
+            if voidElementNames.contains(tagName) {
+                parent?.children.append(node)
+            } else {
+                unfinishedNodes.append(node)
+            }
         }
+    }
+
+    private func getAttributes(from tag: String) -> (String, [String: String]) {
+        let parts = tag.split(separator: " ")
+        let tagName = parts[0].lowercased()
+        var attributes: [String: String] = [:]
+        for part in parts.dropFirst() {
+            if part.contains("=") {
+                let split = part.split(separator: "=", maxSplits: 1)
+
+                var value = split[1]
+                if value.first == "'" || value.first == "\"" {
+                    value = value.dropFirst().dropLast()
+                }
+
+                attributes[split[0].lowercased()] = String(value)
+            } else {
+                // attribute has no value
+                attributes[part.lowercased()] = ""
+            }
+        }
+        return (tagName, attributes)
     }
 
     private func createTextNode(_ text: String) {
@@ -60,13 +92,20 @@ class HtmlParser {
         }
 
         var parent = unfinishedNodes.last
-        let node = TextNode(text: text, parent: parent)
+        let node = TextNode(text: processText(text), parent: parent)
         if parent != nil {
             parent?.children.append(node)
         } else {
             unfinishedNodes.append(node)
         }
     }
+
+    private func processText(_ text: String) -> String {
+    return text
+        .replacingOccurrences(of: "&amp;", with: "&")
+        .replacingOccurrences(of: "&lt;", with: "<")
+        .replacingOccurrences(of: "&gt;", with: ">")
+}
 
     private func finish() -> HtmlNode? {
         while unfinishedNodes.count > 1 {
@@ -88,7 +127,7 @@ class HtmlParser {
 
     private func printNode(_ node: HtmlNode, indent: String = "") {
         if let element = node as? ElementNode {
-            print("\(indent)ElementNode: <\(element.name)>")
+            print("\(indent)ElementNode: <\(element.name)> with attributes: \(element.attributes)")
             for child in element.children {
                 printNode(child, indent: indent + "  ")
             }

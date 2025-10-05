@@ -17,10 +17,12 @@ class TextNode: HtmlNode {
 class ElementNode: HtmlNode {
     var name: String
     var children: [HtmlNode] = []
+    let attributes: [String: String]
     var parent: HtmlNode?
 
-    init(name: String, parent: HtmlNode?) {
+    init(name: String, attributes: [String: String], parent: HtmlNode?) {
         self.name = name
+        self.attributes = attributes
         self.parent = parent
     }
 }

@@ -29,6 +29,9 @@ func lex(_ html: String) -> [Token] {
         tokens.append(.text(processText(buffer)))
     }
 
+    let parser = HtmlParser(html: html)
+    parser.parse()
+
     return tokens
 }
 
