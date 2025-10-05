@@ -9,22 +9,30 @@ struct ToyBrowser: AsyncParsableCommand {
     var urlString: String
 
     mutating func run() async throws {
-        let tokens = try await load(urlString)
+        let htmlString = try await load(urlString)
 
-        guard let tokens else {
-            print("Lexing failed, URL: \(urlString)")
+        guard let htmlString else {
+            print("Failed to load URL: \(urlString)")
+            return
+        }
+
+        let parser = HtmlParser(html: htmlString)
+        let rootNode = parser.parse()
+
+        guard let rootNode else {
+            print("Failed to parse HTML")
             return
         }
 
         Task { @MainActor in
-            displayBrowser(tokens: tokens)
+            displayBrowser(rootNode: rootNode)
         }
     }
 
 }
 
 @MainActor
-func displayBrowser(tokens: [Token]) {
+func displayBrowser(rootNode: HtmlNode) {
     let window =
         Window(width: 800, height: 600)
         ?? { fatalError("Could not create window") }()
@@ -53,11 +61,11 @@ func displayBrowser(tokens: [Token]) {
 
     let margin: Int32 = 20
 
-    var layoutData = layoutText(tokens, maxWidth: window.width - 2 * margin)
+    var layoutData = layoutText(rootNode, maxWidth: window.width - 2 * margin)
     maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
 
     window.registerResizeListener {
-        layoutData = layoutText(tokens, maxWidth: window.width - 2 * margin)
+        layoutData = layoutText(rootNode, maxWidth: window.width - 2 * margin)
         maxScroll = Int((layoutData.last?.y ?? 0) + Float(margin) - Float(window.height / 2))
     }
 
@@ -115,7 +123,7 @@ func drawScrollbar(canvas: Canvas, window: Window, scroll: Int, maxScroll: Int, 
     canvas.drawRect(scrollbarRect, scrollbarPaint)
 }
 
-func load(_ urlString: String) async throws -> [Token]? {
+func load(_ urlString: String) async throws -> String? {
     guard let url = parseUrl(urlString) else {
         print("Invalid URL: \(urlString)")
         return nil
@@ -149,7 +157,6 @@ func load(_ urlString: String) async throws -> [Token]? {
         print("Got response: \(statusCode) \(statusMessage)")
     }
 
-    let toShow = response.body
-    return lex(toShow)
+    return response.body
 }
 
