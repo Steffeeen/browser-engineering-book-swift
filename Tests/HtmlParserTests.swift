@@ -49,4 +49,21 @@ final class HtmlParserTests: XCTestCase {
         }
         XCTAssertEqual(root.text, "hello world")
     }
+
+    func testParseWithAttributes() {
+        let html = "<a href=\"https://example.com\">link</a>"
+        let parser = HtmlParser(html: html)
+        guard let root = parser.parse() as? ElementNode else {
+            XCTFail("Root should be an ElementNode")
+            return
+        }
+        XCTAssertEqual(root.name, "a")
+        XCTAssertEqual(root.attributes["href"], "https://example.com")
+        XCTAssertEqual(root.children.count, 1)
+        guard let textNode = root.children.first as? TextNode else {
+            XCTFail("Child should be a TextNode")
+            return
+        }
+        XCTAssertEqual(textNode.text, "link")
+    }
 }
