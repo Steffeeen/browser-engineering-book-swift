@@ -1,5 +1,5 @@
-import SkiaKit
 import Foundation
+import SkiaKit
 
 struct WordLayoutData {
     let word: String
@@ -10,17 +10,75 @@ struct WordLayoutData {
 
 @MainActor
 func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
-    var layoutData: [WordLayoutData] = []
+    let layout = Layout(tokens: tokens, maxWidth: maxWidth)
+    layout.layout()
+    return layout.layoutData
+}
 
+@MainActor
+private class Layout {
+    var layoutData: [WordLayoutData] = []
     var currentFont = createFont(weight: .normal, slant: .upright, size: 16.0)
-    let lineHeight = currentFont.getMetrics()
+    let lineHeight: Float
+    let maxWidth: Int32
+    let tokens: [Token]
 
     var currentX: Float = 0.0
     var currentY: Float = 0.0
 
-    func newLine() {
-        currentX = 0.0
-        currentY += lineHeight * 1.25
+    init(tokens: [Token], maxWidth: Int32) {
+        self.tokens = tokens
+        self.maxWidth = maxWidth
+        self.lineHeight = currentFont.getMetrics()
+    }
+
+    func layout() {
+        let fontSizeModifier: Float = 4.0
+
+        for token in tokens {
+            switch token {
+            case .text(let text):
+                layoutText(text)
+            case .tag(let tag):
+                let currentSize = currentFont.size
+                let currentWeight = weightToEnumHelper(currentFont.typeface.fontStyle.weight)
+                let currentSlant = currentFont.typeface.fontStyle.slant
+                switch tag.lowercased() {
+                case "br":
+                    newLine()
+                case "b":
+                    currentFont = createFont(weight: .bold, slant: currentSlant, size: currentSize)
+                case "/b":
+                    currentFont = createFont(
+                        weight: .normal, slant: currentSlant, size: currentSize)
+                case "i":
+                    currentFont = createFont(
+                        weight: currentWeight, slant: .italic, size: currentSize)
+                case "/i":
+                    currentFont = createFont(
+                        weight: currentWeight, slant: .upright, size: currentSize)
+                case "small":
+                    currentFont = createFont(
+                        weight: currentWeight, slant: currentSlant,
+                        size: currentSize - fontSizeModifier)
+                case "/small":
+                    currentFont = createFont(
+                        weight: currentWeight, slant: currentSlant,
+                        size: currentSize + fontSizeModifier)
+                case "big":
+                    currentFont = createFont(
+                        weight: currentWeight, slant: currentSlant,
+                        size: currentSize + fontSizeModifier)
+                case "/big":
+                    currentFont = createFont(
+                        weight: currentWeight, slant: currentSlant,
+                        size: currentSize - fontSizeModifier)
+                default:
+                    continue
+
+                }
+            }
+        }
     }
 
     func layoutText(_ text: String) {
@@ -43,49 +101,15 @@ func layoutText(_ tokens: [Token], maxWidth: Int32) -> [WordLayoutData] {
         }
     }
 
-    let fontSizeModifier: Float = 4.0
-
-    for token in tokens {
-        switch token {
-        case .text(let text):
-            layoutText(text)
-        case .tag(let tag):
-            let currentSize = currentFont.size
-            let currentWeight = weightToEnumHelper(currentFont.typeface.fontStyle.weight)
-            let currentSlant = currentFont.typeface.fontStyle.slant
-            switch tag.lowercased() {
-            case "br":
-                newLine()
-            case "b":
-                currentFont = createFont(weight: .bold, slant: currentSlant, size: currentSize)
-            case "/b":
-                currentFont = createFont(weight: .normal, slant: currentSlant, size: currentSize)
-            case "i":
-                currentFont = createFont(weight: currentWeight, slant: .italic, size: currentSize)
-            case "/i":
-                currentFont = createFont(weight: currentWeight, slant: .upright, size: currentSize)
-            case "small":
-                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize - fontSizeModifier)
-            case "/small":
-                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize + fontSizeModifier)
-            case "big":
-                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize + fontSizeModifier)
-            case "/big":
-                currentFont = createFont(weight: currentWeight, slant: currentSlant, size: currentSize - fontSizeModifier)
-            default:
-                continue
-
-            }
-        }
+    func newLine() {
+        currentX = 0.0
+        currentY += lineHeight * 1.25
     }
-
-    return layoutData
 }
-
 
 // Font cache to avoid recreating Font objects with the same parameters
 @MainActor
-fileprivate class FontCache {
+private class FontCache {
     static let shared = FontCache()
     private var cache: [String: Font] = [:]
 
