@@ -3,6 +3,10 @@ private let voidElementNames: Set<String> = [
     "link", "meta", "source", "track", "wbr"
 ]
 
+private let tagsInHead: Set<String> = [
+    "base", "basefont", "bgsound", "noscript", "link", "meta", "title", "style", "script"
+]
+
 class HtmlParser {
     private var unfinishedNodes = [HtmlNode]()
     private let html: String
@@ -39,11 +43,14 @@ class HtmlParser {
         return finish()
     }
 
-    private func handleTag(_ tagName: String) {
-        if tagName.hasPrefix("!") {
+    private func handleTag(_ tag: String) {
+        if tag.hasPrefix("!") {
             // ignore doctype and comments
             return
         }
+
+        let (tagName, attributes) = getAttributes(from: tag)
+        handleImplicitTags(for: tagName)
 
         if tagName.hasPrefix("/") {
             if unfinishedNodes.count == 1 {
@@ -54,7 +61,6 @@ class HtmlParser {
             parent?.children.append(node!)
         } else {
             var parent = unfinishedNodes.last
-            let (tagName, attributes) = getAttributes(from: tagName)
             let node = ElementNode(name: tagName, attributes: attributes, parent: parent)
             if voidElementNames.contains(tagName) {
                 parent?.children.append(node)
@@ -64,7 +70,33 @@ class HtmlParser {
         }
     }
 
+    private func handleImplicitTags(for tag: String?) {
+        while true {
+            let openTags = unfinishedNodes.compactMap { ($0 as? ElementNode)?.name }
+
+            if openTags.isEmpty && tag != "html" {
+                handleTag("html")
+            } else if openTags == ["html"] && !["head", "body", "/html"].contains(tag) && tag != nil {
+                if tagsInHead.contains(tag!) {
+                    handleTag("head")
+                } else {
+                    handleTag("body")
+                }
+            } else if openTags == ["html", "head"] && tag != nil && !tagsInHead.contains(tag!) && tag != "/head" {
+                handleTag("/head")
+            } else {
+                break
+            }
+        }
+    }
+
     private func getAttributes(from tag: String) -> (String, [String: String]) {
+        print(tag)
+        if tag.starts(with: "/") {
+            print("tag starts with /")
+            return (tag.lowercased(), [:])
+        }
+
         let parts = tag.split(separator: " ")
         let tagName = parts[0].lowercased()
         var attributes: [String: String] = [:]
@@ -91,6 +123,8 @@ class HtmlParser {
             return
         }
 
+        handleImplicitTags(for: nil)
+
         var parent = unfinishedNodes.last
         let node = TextNode(text: processText(text), parent: parent)
         if parent != nil {
@@ -108,6 +142,10 @@ class HtmlParser {
 }
 
     private func finish() -> HtmlNode? {
+        if !unfinishedNodes.isEmpty {
+            handleImplicitTags(for: nil)
+        }
+
         while unfinishedNodes.count > 1 {
             let node = unfinishedNodes.popLast()
             var parent = unfinishedNodes.last
